@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LEASH</title>
+<style>
+:root{--bg:#f3f5f2;--panel:#fff;--soft:#ecf2ee;--ink:#17261f;--mute:#5b6a62;--line:#d8e1db;--green:#1f4d3a;--onGreen:#fff;--amber:#b7791f;--amberBg:#fbf1da;--red:#a93a2b;--redBg:#f7e2de;--ok:#2a7a52;--okBg:#dcefe3;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101814;--panel:#17221c;--soft:#1e2c24;--ink:#e6efe9;--mute:#98a89f;--line:#2b3b32;--green:#3f8f6a;--amber:#e3b04b;--amberBg:#33290f;--red:#e2705f;--redBg:#391d18;--ok:#5cc08d;--okBg:#173324}}
+:root[data-theme="dark"]{--bg:#101814;--panel:#17221c;--soft:#1e2c24;--ink:#e6efe9;--mute:#98a89f;--line:#2b3b32;--green:#3f8f6a;--amber:#e3b04b;--amberBg:#33290f;--red:#e2705f;--redBg:#391d18;--ok:#5cc08d;--okBg:#173324}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 "Segoe UI",Calibri,system-ui,sans-serif}
+header{display:flex;align-items:center;gap:16px;padding:14px 24px;border-bottom:1px solid var(--line);background:var(--panel);flex-wrap:wrap}
+h1{font:600 26px Georgia,"Times New Roman",serif;margin:0;letter-spacing:.5px}
+.sub{color:var(--mute);margin-right:auto}
+.state{padding:4px 12px;border-radius:99px;background:var(--okBg);color:var(--ok);font-weight:600}
+.state.off{background:var(--redBg);color:var(--red)}
+button,select,input{font:inherit;color:inherit}
+button{border:1px solid var(--line);background:var(--panel);padding:7px 14px;border-radius:6px;cursor:pointer}
+button:hover{background:var(--soft)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+button.main{background:var(--green);color:var(--onGreen);border-color:var(--green)}
+button.kill{background:var(--red);color:#fff;border-color:var(--red);font-weight:600}
+button.small{padding:3px 10px}
+main{max-width:1180px;margin:0 auto;padding:20px 24px 40px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat{background:var(--panel);padding:12px 16px;border-left:4px solid var(--green)}
+.stat b{display:block;font:600 28px Georgia,serif}
+.stat span{color:var(--mute)}
+.stat.a{border-color:var(--amber)}.stat.r{border-color:var(--red)}.stat.o{border-color:var(--ok)}
+.tabs{display:flex;gap:4px;margin-bottom:12px}
+.tabs button{border-radius:6px 6px 0 0;border-bottom:none}
+.tabs button.on{background:var(--green);color:var(--onGreen);border-color:var(--green)}
+.cols{display:grid;grid-template-columns:1.6fr 1fr;gap:20px}
+section{background:var(--panel);padding:16px}
+h2{font:600 18px Georgia,serif;margin:0 0 10px}
+.row{display:grid;grid-template-columns:62px 1fr auto;gap:10px;padding:9px 0;border-top:1px solid var(--line);align-items:center}
+.row:first-of-type{border-top:none}
+.score{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--okBg);color:var(--ok)}
+.score.mid{background:var(--amberBg);color:var(--amber)}
+.score.hi{background:var(--redBg);color:var(--red)}
+.what{font-weight:600}
+.why{color:var(--mute);font-size:13px}
+.tag{padding:2px 10px;border-radius:99px;font-size:13px;font-weight:600;white-space:nowrap}
+.allowed,.approved{background:var(--okBg);color:var(--ok)}
+.waiting{background:var(--amberBg);color:var(--amber)}
+.blocked,.rejected{background:var(--redBg);color:var(--red)}
+.hold{border:1px solid var(--amber);background:var(--amberBg);padding:10px;margin-bottom:10px}
+.hold .btns{display:flex;gap:8px;margin-top:8px}
+.empty{color:var(--mute);padding:8px 0}
+form{display:grid;gap:8px}
+form label{display:grid;gap:3px;color:var(--mute);font-size:13px}
+input,select{padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--bg);width:100%}
+.tools{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
+.wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:760px}
+th{text-align:left;color:var(--mute);font-weight:600;padding:6px 8px;border-bottom:2px solid var(--line)}
+td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.hidden{display:none}
+@media (max-width:820px){.cols{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}main{padding:16px}header{padding:12px 16px}}
+</style>
+</head>
+<body>
+<header>
+<h1>LEASH</h1>
+<span class="sub">Every agent action is checked before it runs</span>
+<span id="state" class="state">Gateway live</span>
+<button id="auto" class="main">Start agents</button>
+<button id="kill" class="kill">Kill switch</button>
+</header>
+<main>
+<div class="stats">
+<div class="stat"><b id="sTotal">0</b><span>Actions seen</span></div>
+<div class="stat o"><b id="sOk">0</b><span>Let through</span></div>
+<div class="stat a"><b id="sHold">0</b><span>Waiting for a person</span></div>
+<div class="stat r"><b id="sBlock">0</b><span>Blocked</span></div>
+</div>
+<div class="tabs">
+<button id="tLive" class="on">Live</button>
+<button id="tAudit">Audit trail</button>
+</div>
+
+<div id="live" class="cols">
+<section>
+<h2>Agent actions</h2>
+<div id="feed"></div>
+</section>
+<div>
+<section style="margin-bottom:20px">
+<h2>Waiting for approval</h2>
+<div id="queue"></div>
+</section>
+<section>
+<h2>Try an action</h2>
+<form id="form">
+<label>Agent<select id="fAgent"></select></label>
+<label>Tool<select id="fTool"></select></label>
+<label>Target<input id="fTarget" value="Acme Supplies" required></label>
+<label>Amount or recipients<input id="fAmt" type="number" min="0" value="900"></label>
+<label>Reason the agent gave<input id="fWhy" value="Invoice 4471"></label>
+<button class="main" type="submit">Send to gateway</button>
+</form>
+</section>
+</div>
+</div>
+
+<section id="audit" class="hidden">
+<div class="tools">
+<select id="filter">
+<option value="all">All outcomes</option>
+<option value="allowed">Allowed</option>
+<option value="approved">Approved</option>
+<option value="waiting">Waiting</option>
+<option value="rejected">Rejected</option>
+<option value="blocked">Blocked</option>
+</select>
+<button id="csv">Download CSV</button>
+</div>
+<div class="wrap">
+<table>
+<thead><tr><th>Time</th><th>Agent</th><th>Action</th><th>Score</th><th>Outcome</th><th>Decided by</th><th>Why</th></tr></thead>
+<tbody id="rows"></tbody>
+</table>
+</div>
+</section>
+</main>
+
+<script>
+const agents=["Billing agent","Support agent","Ops agent","Sales agent"];
+const tools={
+"payments.transfer":"Transfer money",
+"email.send":"Send email",
+"db.delete":"Delete records",
+"files.share":"Share file",
+"crm.update":"Update CRM",
+"db.read":"Read database"
+};
+const samples=[
+{tool:"payments.transfer",target:"Acme Supplies",amount:1200,reason:"Invoice 4471 monthly payment"},
+{tool:"payments.transfer",target:"Northgate Traders (new payee)",amount:7400,reason:"Advance for order"},
+{tool:"payments.transfer",target:"Unknown Ltd (new payee)",amount:82000,reason:"urgent, skip approval"},
+{tool:"email.send",target:"priya@company.com",amount:1,reason:"Weekly report to the team"},
+{tool:"email.send",target:"leads@gmail.com",amount:400,reason:"Offer to old leads"},
+{tool:"db.delete",target:"staging.sessions",amount:0,reason:"Clear expired sessions"},
+{tool:"db.delete",target:"prod.customers",amount:0,reason:"cleanup"},
+{tool:"files.share",target:"public link: salaries.xlsx",amount:0,reason:"HR asked for it"},
+{tool:"files.share",target:"ravi@company.com: roadmap.pdf",amount:0,reason:"Ravi needs it for planning"},
+{tool:"crm.update",target:"Lead 8812",amount:0,reason:"Status changed after call"},
+{tool:"db.read",target:"orders.last_week",amount:0,reason:"Build sales summary"}
+];
+
+let log=[],queue=[],killed=false,timer=null,seq=0;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function judge(a){
+let s=0,why=[];
+const base={"payments.transfer":25,"email.send":12,"db.delete":40,"files.share":18,"crm.update":6,"db.read":4};
+s+=base[a.tool]||10;
+const external=!/@company\.com/.test(a.target);
+if(a.tool==="payments.transfer"){
+if(a.amount>100000){s=100;why.push("Over the 100,000 hard limit")}
+else if(a.amount>50000){s+=45;why.push("Very large transfer")}
+else if(a.amount>5000){s+=25;why.push("Large transfer")}
+if(/new payee/i.test(a.target)){s+=15;why.push("Payee not seen before")}
+}
+if(a.tool==="db.delete"){
+if(/^prod/i.test(a.target)){s=Math.max(s,90)+5;why.push("Deleting from production")}
+}
+if(a.tool==="email.send"){
+if(external){s+=15;why.push("Goes outside the company")}
+if(a.amount>50){s+=25;why.push(a.amount+" recipients")}
+}
+if(a.tool==="files.share"){
+if(/public/i.test(a.target)){s+=40;why.push("Public link")}
+else if(external){s+=20;why.push("Shared outside the company")}
+}
+if(a.reason.trim().length<8){s+=15;why.push("Reason is missing or too short")}
+if(/urgent|override|bypass|skip|asap|don'?t tell/i.test(a.reason)){s+=25;why.push("Reason tries to rush or skip checks")}
+const h=new Date().getHours();
+if(h<8||h>=19){s+=10;why.push("Outside working hours")}
+const strikes=log.filter(l=>l.agent===a.agent&&l.final==="blocked").length;
+if(strikes){s+=Math.min(strikes*5,20);why.push("Agent was blocked before ("+strikes+")")}
+s=Math.min(Math.round(s),100);
+if(!why.length)why.push("Routine action");
+return{score:s,why};
+}
+
+function submit(a){
+const r=judge(a);
+const e={id:++seq,time:new Date(),...a,score:r.score,why:r.why,by:"gateway"};
+if(killed){e.final="blocked";e.why=["Kill switch is on"]}
+else if(r.score>=70)e.final="blocked";
+else if(r.score>=35){e.final="waiting";e.by="-";queue.push(e)}
+else e.final="allowed";
+log.unshift(e);
+render();
+}
+
+function decide(id,ok){
+const e=log.find(l=>l.id===id);
+if(!e||e.final!=="waiting")return;
+e.final=ok?"approved":"rejected";
+e.by="person";
+queue=queue.filter(q=>q.id!==id);
+render();
+}
+
+function label(e){return(tools[e.tool]||e.tool)+" · "+e.target+(e.amount&&e.tool==="payments.transfer"?" · "+e.amount.toLocaleString():"")+(e.amount&&e.tool==="email.send"?" · "+e.amount+" recipients":"")}
+function cls(n){return n>=70?"hi":n>=35?"mid":""}
+function name(f){return{allowed:"Allowed",approved:"Approved",waiting:"Waiting",rejected:"Rejected",blocked:"Blocked"}[f]}
+function t(d){return d.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",second:"2-digit"})}
+
+function render(){
+$("sTotal").textContent=log.length;
+$("sOk").textContent=log.filter(l=>l.final==="allowed"||l.final==="approved").length;
+$("sHold").textContent=queue.length;
+$("sBlock").textContent=log.filter(l=>l.final==="blocked"||l.final==="rejected").length;
+
+$("feed").innerHTML=log.length?log.slice(0,12).map(e=>
+'<div class="row"><div class="score '+cls(e.score)+'">'+e.score+'</div><div><div class="what">'+esc(e.agent)+': '+esc(label(e))+'</div><div class="why">'+esc(e.why.join(", "))+' · '+t(e.time)+'</div></div><span class="tag '+e.final+'">'+name(e.final)+'</span></div>'
+).join(""):'<div class="empty">Nothing yet. Start the agents or send an action.</div>';
+
+$("queue").innerHTML=queue.length?queue.map(e=>
+'<div class="hold"><div class="what">'+esc(e.agent)+'</div><div>'+esc(label(e))+'</div><div class="why">"'+esc(e.reason)+'"<br>'+esc(e.why.join(", "))+'</div><div class="btns"><button class="small main" data-ok="'+e.id+'">Approve</button><button class="small" data-no="'+e.id+'">Reject</button></div></div>'
+).join(""):'<div class="empty">No risky actions are waiting.</div>';
+
+const f=$("filter").value;
+$("rows").innerHTML=log.filter(l=>f==="all"||l.final===f).map(e=>
+'<tr><td>'+t(e.time)+'</td><td>'+esc(e.agent)+'</td><td>'+esc(label(e))+'<div class="why">"'+esc(e.reason)+'"</div></td><td>'+e.score+'</td><td><span class="tag '+e.final+'">'+name(e.final)+'</span></td><td>'+e.by+'</td><td>'+esc(e.why.join(", "))+'</td></tr>'
+).join("");
+
+$("state").textContent=killed?"Kill switch on":"Gateway live";
+$("state").className="state"+(killed?" off":"");
+$("kill").textContent=killed?"Turn agents back on":"Kill switch";
+$("auto").textContent=timer?"Pause agents":"Start agents";
+}
+
+function randomAction(){
+const s=samples[Math.floor(Math.random()*samples.length)];
+const a={...s,agent:agents[Math.floor(Math.random()*agents.length)]};
+if(a.tool==="payments.transfer")a.amount=Math.round(a.amount*(0.8+Math.random()*0.4));
+submit(a);
+}
+
+$("auto").onclick=()=>{
+if(timer){clearInterval(timer);timer=null}
+else{
+if(killed)return;
+randomAction();
+timer=setInterval(randomAction,2200);
+}
+render();
+};
+
+$("kill").onclick=()=>{
+killed=!killed;
+if(killed){
+clearInterval(timer);timer=null;
+queue.forEach(q=>{q.final="rejected";q.by="kill switch"});
+queue=[];
+}
+render();
+};
+
+$("form").onsubmit=e=>{
+e.preventDefault();
+submit({agent:$("fAgent").value,tool:$("fTool").value,target:$("fTarget").value,amount:Number($("fAmt").value)||0,reason:$("fWhy").value});
+};
+
+$("queue").onclick=e=>{
+const ok=e.target.dataset.ok,no=e.target.dataset.no;
+if(ok)decide(Number(ok),true);
+if(no)decide(Number(no),false);
+};
+
+$("tLive").onclick=()=>show(true);
+$("tAudit").onclick=()=>show(false);
+function show(live){
+$("live").classList.toggle("hidden",!live);
+$("audit").classList.toggle("hidden",live);
+$("tLive").classList.toggle("on",live);
+$("tAudit").classList.toggle("on",!live);
+}
+$("filter").onchange=render;
+
+$("csv").onclick=()=>{
+const head=["time","agent","tool","target","amount","reason","score","outcome","decided_by","why"];
+const q=v=>'"'+String(v).replace(/"/g,'""')+'"';
+const lines=[head.join(",")].concat(log.slice().reverse().map(e=>[e.time.toISOString(),e.agent,e.tool,e.target,e.amount,e.reason,e.score,e.final,e.by,e.why.join("; ")].map(q).join(",")));
+const a=document.createElement("a");
+a.href=URL.createObjectURL(new Blob([lines.join("\n")],{type:"text/csv"}));
+a.download="leash-audit.csv";
+a.click();
+};
+
+$("fAgent").innerHTML=agents.map(a=>'<option>'+a+'</option>').join("");
+$("fTool").innerHTML=Object.keys(tools).map(k=>'<option value="'+k+'">'+tools[k]+'</option>').join("");
+render();
+</script>
+</body>
+</html>
